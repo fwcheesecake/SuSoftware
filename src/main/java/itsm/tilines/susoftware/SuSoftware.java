@@ -5,16 +5,14 @@
 
 package itsm.tilines.susoftware;
 
-import org.jpl7.Compound;
-import org.jpl7.Query;
-import org.jpl7.Term;
-import org.jpl7.Variable;
+import org.jpl7.*;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 
@@ -24,7 +22,7 @@ import java.util.Map;
 public class SuSoftware extends JFrame {
     final static String MAINPANEL = "Panel principal", CARACTERISTICAS = "Panel de caracteristicas", CATEGORIA = "Panel de categoria", COMPLEJIDAD = "Panel de complejidad", SISTEMAS = "Panel de Sistemas Operatvos", RATING = "Panel de rating", PRICING = "Panel de pricing";
     JPanel panelMain, panelLeftButtons, panelLeft, panelRight, leftButtonContainer, panelCategories, panelFeatures, panelComplexity, panelOS, panelRating, panelPricing;
-    JButton btnCategories, btnFeatures, btnComplexity, btnOS, btnRating, btnPricing, btnBack, btnSearch;
+    JButton btnCategories, btnFeatures, btnComplexity, btnOS, btnRating, btnPricing, btnBack, btnSearch, btnClearFilters;
     CheckboxGroup cbgFeatures, cbgCategories, cbgComplexity, cbgOS, cbgRating, cbgPricing;
 
     ArrayList<Checkbox> checkBoxesFeatures = new ArrayList<>(),
@@ -74,11 +72,11 @@ public class SuSoftware extends JFrame {
 
         tableSoftware = new JTable();
 
-        scrollTableSoftware = new JScrollPane(tableSoftware, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        scrollTableSoftware = new JScrollPane(tableSoftware, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
         btnBack = new JButton("Regresar");
         btnSearch = new JButton("Buscar");
-
+        btnClearFilters = new JButton("Borrar filtros");
         btnCategories = new JButton("Categoria");
         btnFeatures = new JButton("Caracteristicas");
         btnComplexity = new JButton("Complejidad");
@@ -100,11 +98,9 @@ public class SuSoftware extends JFrame {
         addCheckBoxs(panelComplexity, checkBoxesComplexity, cbgComplexity, tipeData[2]);
         addCheckBoxs(panelRating, checkBoxesRating, cbgRating, tipeData[3]);
         addCheckBoxs(panelPricing, checkBoxesPricing, cbgPricing, tipeData[4]);
-        addCheckBoxs(panelOS, checkBoxesOS, tipeData[5]);
+        addCheckBoxs(panelOS, checkBoxesOS, cbgOS, tipeData[5]);
 
         cbgFeatures = new CheckboxGroup();
-
-        panelRight.add(btnBack);
 
         panelLeft.setMaximumSize(new Dimension(screenSize.width / 3, screenSize.height));
         panelLeft.setPreferredSize(new Dimension(screenSize.width / 3, screenSize.height));
@@ -138,7 +134,7 @@ public class SuSoftware extends JFrame {
         panelLeft.add(panelFeatures, CARACTERISTICAS);
 
         panelComplexity.setLayout(new BoxLayout(panelComplexity, BoxLayout.Y_AXIS));
-        panelLeft.add(panelOS, COMPLEJIDAD);
+        panelLeft.add(panelComplexity, COMPLEJIDAD);
 
         panelOS.setLayout(new BoxLayout(panelOS, BoxLayout.Y_AXIS));
         panelLeft.add(panelOS, SISTEMAS);
@@ -150,10 +146,33 @@ public class SuSoftware extends JFrame {
         panelPricing.setLayout(new BoxLayout(panelPricing, BoxLayout.Y_AXIS));
 
 
-        panelRight.setLayout(new GridLayout(3, 1));
+        panelRight.setLayout(new GridBagLayout());
+        GridBagConstraints c = new GridBagConstraints();
+
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.weightx = 0.1;
+        c.ipady = 40;
+
         panelRight.setPreferredSize(new Dimension((screenSize.width / 3) * 2, screenSize.height));
-        panelRight.add(scrollTableSoftware);
-        panelRight.add(btnSearch);
+
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 0;
+        c.gridy = 0;
+        panelRight.add(btnBack, c);
+
+        c.gridy = 2;
+        panelRight.add(btnSearch, c);
+
+        c.gridy = 2;
+        c.gridx = 1;
+        panelRight.add(btnClearFilters, c);
+
+        c.fill = GridBagConstraints.BOTH;
+        c.weighty = 0.8;
+        c.gridwidth = 3;
+        c.gridx = 0;
+        c.gridy = 1;
+        panelRight.add(scrollTableSoftware, c);
 
         scrollTableSoftware.setMaximumSize(new Dimension((screenSize.width / 3) * 2, screenSize.height));
 
@@ -168,6 +187,14 @@ public class SuSoftware extends JFrame {
 
         pack();
 
+        btnClearFilters.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                for (CheckboxGroup checkboxGroup : Arrays.asList(cbgFeatures, cbgCategories, cbgComplexity, cbgOS, cbgPricing, cbgRating)) {
+                    if(checkboxGroup.getSelectedCheckbox() != null)
+                        checkboxGroup.setSelectedCheckbox(null);
+                }
+            }
+        });
         btnSearch.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 search();
@@ -191,6 +218,7 @@ public class SuSoftware extends JFrame {
         btnComplexity.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 cardLayout.show(panelLeft, COMPLEJIDAD);
+                System.out.println("hola");
             }
         });
         btnOS.addActionListener(new ActionListener() {
@@ -212,7 +240,65 @@ public class SuSoftware extends JFrame {
     }
 
     private void search() {
+        StringBuilder sbQuery = new StringBuilder();
 
+        if(cbgCategories.getSelectedCheckbox() != null) {
+            String s = cbgCategories.getSelectedCheckbox().getLabel();
+            sbQuery.append("por_categoria(X, \'" + s + "\', A, B, C, D, E, F),");
+        }
+        if(cbgFeatures.getSelectedCheckbox() != null) {
+            String s = cbgFeatures.getSelectedCheckbox().getLabel();
+            sbQuery.append("por_caracteristicas(X, \'" + s + "\', A, B, C, D, E, F),");
+        }
+        if(cbgRating.getSelectedCheckbox() != null) {
+            String s = cbgRating.getSelectedCheckbox().getLabel();
+            sbQuery.append("por_rating(X, " + s + ", A, B, C, D, E, F),");
+        }
+        if(cbgOS.getSelectedCheckbox() != null) {
+            String s = cbgOS.getSelectedCheckbox().getLabel();
+            sbQuery.append("por_so(X, \'" + s + "\', A, B, C, D, E, F),");
+        }
+        if(cbgPricing.getSelectedCheckbox() != null) {
+            String s = cbgPricing.getSelectedCheckbox().getLabel();
+            sbQuery.append("por_precio(X, \'" + s + "\', A, B, C, D, E, F),");
+        }
+        if(cbgComplexity.getSelectedCheckbox() != null) {
+            String s = cbgComplexity.getSelectedCheckbox().getLabel();
+            sbQuery.append("por_complejidad(X, " + s + ", A, B, C, D, E, F),");
+        }
+
+        String query;
+        if(sbQuery.isEmpty())
+            query = sbQuery.append("software(X, A, B, C, D, E, F).").toString();
+        else {
+            query = sbQuery.toString();
+            query = query.substring(0, query.length() - 1) + ".";
+        }
+
+        Query q4 = new Query(query);
+
+        data.clear();
+        softwares.clear();
+        Map<String, Term> solution;
+        while (q4.hasMoreSolutions()) {
+            solution = q4.nextSolution();
+
+            Object[] tempData = {
+                    solution.get("X"),
+                    solution.get("A"),
+                    solution.get("B"),
+                    solution.get("C"),
+                    solution.get("D"),
+                    solution.get("E"),
+                    solution.get("F")
+            };
+            data.add(tempData);
+
+            softwares.add(new Software(tempData));
+
+            dataModel.data = data;
+            dataModel.fireTableDataChanged();
+        }
     }
 
     public static void main(String[] args) {
@@ -285,20 +371,9 @@ public class SuSoftware extends JFrame {
 
     public void addCheckBoxs(JPanel panel, ArrayList<Checkbox> checkBoxes, CheckboxGroup checkboxGroup, HashSet<String> set) {
         for(String s : set) {
-            System.out.println(s);
             checkBoxes.add(new Checkbox(s, checkboxGroup, false));
             panel.add(checkBoxes.get(checkBoxes.size() - 1));
         }
-        System.out.println("-------");
-    }
-
-    public void addCheckBoxs(JPanel panel, ArrayList<Checkbox> checkBoxes, HashSet<String> set) {
-        for(String s : set) {
-            System.out.println(s);
-            checkBoxes.add(new Checkbox(s, false));
-            panel.add(checkBoxes.get(checkBoxes.size() - 1));
-        }
-        System.out.println("-------");
     }
 }
 

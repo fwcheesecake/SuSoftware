@@ -320,6 +320,8 @@ so(teamviewer, 'android').
 so(teamviewer, 'iphone').
 so(teamviewer, 'chrome os').
 
+
+
 tagsso(X, Y, R) :- setof(X, Y^so(Y, X), R).
 software(X, A, B, C, D, E, F) :-
     categoria(X, A),
